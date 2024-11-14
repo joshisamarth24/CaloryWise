@@ -7,11 +7,13 @@ import toast from "react-hot-toast"
 import { backendUrl } from "@/Constants"
 import { useDispatch, useSelector } from "react-redux"
 import { addMeal, removeMeal } from "@/redux/mealSlice"
+import { set } from "date-fns"
 
 export default function FoodLogging() {
   const {user} = useSelector((state)=>state.user);
   const dispatch = useDispatch();
   const {userFoods} = useSelector((state)=>state.meals);
+  const [noResultsShown,setNoResultsShown] = useState(false);
   const [searchQuery, setSearchQuery] = useState("")
   const [meals, setMeals] = useState([])
   const [dbMeals, setDbMeals] = useState([])
@@ -23,6 +25,7 @@ export default function FoodLogging() {
     foodId: "",
   })
 
+ 
 
 
   const handleDeleteLog = async (id) => {
@@ -43,21 +46,31 @@ export default function FoodLogging() {
   }
 
   const handleSearch = async (e) => {
-    setSearchQuery(e.target.value)
-    if(searchQuery.length >= 1){
-    try {
-      const res = await fetch(`${backendUrl}/foods/searchFoods?query=${searchQuery}`)
-      const data = await res.json()
-      setDbMeals(data)
-      if (data.length === 0) {
-        toast.error("No meals found, please add it manually")
+    const query = e.target.value;
+    setSearchQuery(query);
+    setDbMeals([]);
+  
+    if (query.length >= 1) {
+      try {
+        const res = await fetch(`${backendUrl}/foods/searchFoods?query=${query}`);
+        const data = await res.json();
+        setDbMeals(data);
+        if (data.length === 0 && noResultsShown === false) {
+          toast.error("No meals found, please add it manually");
+          setNoResultsShown(true);
+        }
+        else if(data.length>0){
+          setNoResultsShown(false);
+        }
+      } catch (error) {
+        console.log(error);
+        toast.error("Failed to find meals, please add it manually");
       }
-    } catch (error) {
-      console.log(error)
-      toast.error("Failed to find meals, please add it manually")
     }
-  }
-  }
+    else{
+      setNoResultsShown(false)
+    }
+  };
 
   const handleMealChange = (field, value) => {
     setNewMeal((prevMeal) => ({

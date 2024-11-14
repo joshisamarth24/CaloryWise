@@ -8,11 +8,13 @@ import toast from "react-hot-toast"
 import { useDispatch, useSelector } from "react-redux"
 import { addWorkout, removeWorkout } from "@/redux/workoutSlice"
 
+
 export default function WorkoutLogging() {
   const dispatch = useDispatch();
   const [searchQuery, setSearchQuery] = useState("")
   const {user} = useSelector((state)=>state.user);
   const [workouts, setWorkouts] = useState([])
+  const [noResultsShown,setNoResultsShown] = useState(false);
   const {userWorkouts} = useSelector((state)=>state.workouts);
   const [dbWorkouts, setDbWorkouts] = useState([]);
   const [caloriesBurned, setCaloriesBurned] = useState('');
@@ -40,19 +42,37 @@ export default function WorkoutLogging() {
   }
 
 
-  const handleSearch = async(e) => {
-    setSearchQuery(e.target.value)
+  const handleSearch = async (e) => {
+    const query = e.target.value;
+    if (query.length < 1) {
+      setSearchQuery("");
+      setDbWorkouts([]);
+      setNoResultsShown(false);
+      return;
+    }
+  
+    setSearchQuery(query);
+    setDbWorkouts([]);
+  
     try {
-      const res = await fetch(`${backendUrl}/workouts/search?query=${searchQuery}`);
+      const res = await fetch(`${backendUrl}/workouts/search?query=${query}`);
       const data = await res.json();
       setDbWorkouts(data);
-      if(data.length === 0){
+  
+      if (data.length === 0 && !noResultsShown) {
         toast.error("No workouts found, please add it manually");
+        setNoResultsShown(true); 
+      } else if (data.length > 0) {
+        setNoResultsShown(false);
       }
+  
     } catch (error) {
       console.log(error);
+      toast.error("Failed to fetch workouts, please try again");
     }
-  }
+  };
+
+
   const handleWorkoutChange = (field, value) => {
     setNewWorkout((prevWorkout) => ({
       ...prevWorkout,

@@ -1,1 +1,1 @@
-export const backendUrl = 'https://calorywise.onrender.com';  
+export const backendUrl = 'https://calorywise.onrender.com'; 
